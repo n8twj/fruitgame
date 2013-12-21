@@ -22,7 +22,7 @@ public class SpawnScript : MonoBehaviour {
 		for (int x=0; x<Size.x; x++) {
 			for (int y=0; y<Size.y; y++) {
 				// this is the phsycial spawn point in game, relative to the SpawnPoint object
-				Vector3 spawnVector3 = new Vector3(transform.position.x + x,transform.position.y + y, 0);
+				Vector3 spawnVector3 = new Vector3(transform.position.x + x + 2,transform.position.y + y, 0);
 				// Actual gamepiece 
 				Transform newCell;
 				// pick a random piece 
