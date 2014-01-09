@@ -5,6 +5,7 @@ public class MainMenu : MonoBehaviour {
 
 	public GameObject main;                     // Main menu group
 	public GameObject gameBoard;				// The gameboard group
+	public AudioClip sfx;
 
 	enum GameState { MainMenu, Playing, Paused };
 	GameState gameState = GameState.MainMenu;
@@ -19,6 +20,7 @@ public class MainMenu : MonoBehaviour {
 		hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity);
 	
 		if (HasInput() && hit.collider != null) {
+			audio.PlayOneShot(sfx);
 			switch (gameState) {
 		    	case (GameState.MainMenu):
 		    		if (hit.transform.name == "Play") {
