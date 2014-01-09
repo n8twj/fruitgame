@@ -10,7 +10,9 @@ public class SpawnScript : MonoBehaviour {
 	public float SpawnDelay;
 	
 	private Transform SpawnPoint; 
-	
+	public AudioClip match;
+	public AudioClip noMatch;
+
 	// Called at the startup of the app
 	void Start() {
 		SpawnFruit();
@@ -71,8 +73,12 @@ public class SpawnScript : MonoBehaviour {
 				CellScript cScript = hit.transform.gameObject.GetComponent<CellScript>();
 				int matched = cScript.DetectMatches(hit.transform.gameObject);
 				if (matched >= 1) {
+					audio.PlayOneShot(match);
 					cScript.DestroyMatches(hit.transform.gameObject);
 				} 
+				else {
+					audio.PlayOneShot(noMatch);
+				}
 			} else {
 				Debug.Log("collider null: " + hit.transform);
 			}	
