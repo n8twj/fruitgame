@@ -6,3 +6,8 @@
 *.csproj
 *.unityproj
 *.sln
+
+# Unity-built executables in the top directory
+/*.exe
+/*_Data/
+/*.userprefs
