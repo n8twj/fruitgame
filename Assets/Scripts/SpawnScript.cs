@@ -10,17 +10,22 @@ public class SpawnScript : MonoBehaviour {
 	public float SpawnDelay;
 	
 	private Transform SpawnPoint; 
+	private Transform Floor; 
 	public AudioClip match;
 	public AudioClip noMatch;
-	private readonly float spawnOffsetX = -0.5f;
-	// This should be a little bigger than the Collision2D.Size of the prefab fruits.
+	// tweak this until things look centered-ish
+	private const float spawnOffsetX = -1.0f;
+	// This should be a little bigger than the Collision2D.Size.X of the prefab fruits.
 	// TODO: figure out how to reference that value directly somehow
-	private readonly float sizeX = 1.6f;
+	private const float sizeX = 1.6f;
+	// This should be the exact value of the Collision2D.Size.Y of the prefab fruits
+	private const float sizeY = 1.5f;
 
 	// Called at the startup of the app
 	void Start() {
 		SpawnFruit();
 		SpawnPoint = GameObject.Find("SpawnPoint").transform;
+		Floor = GameObject.Find("Floor").transform;
 		StartCoroutine("SpawnEvent");
 	}	
 	void SpawnFruit() {
@@ -61,11 +66,29 @@ public class SpawnScript : MonoBehaviour {
 	public event MatchHandler Match;
 	public delegate void MatchHandler(int removed);
 
-	private int FindFruitColumn(float x) {
+	public int FindFruitColumn(float x) {
 		return Mathf.RoundToInt((x - transform.position.x) / sizeX);
 	}
 	private float RoundFruitColumn(float x) {
 		return FindFruitColumn(x) * sizeX + transform.position.x;
+	}
+	public int FindFruitRow(float y) {
+		return Mathf.RoundToInt((y - Floor.position.y - sizeY/2) / sizeY);
+	}
+
+	public Transform[,] BuildMatcherGrid() {
+		Transform[,] ret = new Transform[(int)Size.x, (int)Size.y];
+		var gridded = 0;
+		foreach (Transform fruit in transform) {
+			var x = FindFruitColumn(fruit.position.x);
+			var y = FindFruitRow(fruit.position.y);
+			// This may be false for non-fruit, say, the floor
+			if (0 <= x && x < Size.x && 0 <= y && y < Size.y) {
+				ret[x, y] = fruit;
+				gridded++;
+			}
+		}
+		return ret;
 	}
 
 	void FixedUpdate() {
@@ -93,17 +116,17 @@ public class SpawnScript : MonoBehaviour {
 					Debug.Log("Hit the floor");
 					return;	
 				}
-				
+
 				// Grab the attached component
 				// hit is the actual gameobject that was clicked in gameplay
 				CellScript cScript = hit.transform.gameObject.GetComponent<CellScript>();
-				int matched = cScript.DetectMatches(hit.transform.gameObject);
-				if (matched >= 1) {
+				int matched = cScript.DetectMatches();
+				// includes the clicked piece, so minimum match size is 2
+				if (matched >= 2) {
 					audio.PlayOneShot(match);
-					cScript.DestroyMatches(hit.transform.gameObject);
+					cScript.DestroyMatches();
 					// Publish an event when blocks are matched.
-					// Count is the clicked piece (1) + count of all matched pieces
-					Match(1 + matched);
+					Match(matched);
 				} 
 				else {
 					audio.PlayOneShot(noMatch);

@@ -8,8 +8,6 @@ using System.Collections.Generic;
 
 
 public class CellScript : MonoBehaviour {
-	public List<GameObject> CollidingWith;
-	public List<GameObject> CurrentMatches;
 	public Transform CollectParticlesPrefab;
 	
 	// Use this for initialization
@@ -21,56 +19,61 @@ public class CellScript : MonoBehaviour {
 	
 	}
 	// callback functions - invoked by unity from the physics engine
+	// TODO sounds
 	void OnCollisionStay2D(Collision2D collision) { 
-		if (!CollidingWith.Contains(collision.gameObject ) ) {
-			CollidingWith.Add(collision.gameObject);
-		}
 	}
 	// same
 	void OnCollisionExit2D(Collision2D collision) { 
-		CollidingWith.Remove(collision.gameObject);
 	}
+
+	// Returns a list of all fruits matching this one.
+	private List<Transform> FindMatches() {
+		var spawn = transform.parent.GetComponent<SpawnScript>();
+		var grid = spawn.BuildMatcherGrid();
+		var tags  = new List<string>();
+		
+		// iterate the array vertically, horizontally, and diagonally looking for matches.
+		var matched = new List<Transform>();
+		var matchChecks = new Stack<Transform>();
+		matchChecks.Push(transform);
+		while (matchChecks.Count != 0) {
+			var checking = matchChecks.Pop();
+			matched.Add(checking);
+			var x = spawn.FindFruitColumn(checking.position.x);
+			var y = spawn.FindFruitRow(checking.position.y);
+			// All directions one square away from this one, including diagonally
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dy = -1; dy <= 1; dy++) {
+					var x2 = x + dx;
+					var y2 = y + dy;
+					if (0 <= x2 && x2 < spawn.Size.x && 0 <= y2 && y2 < spawn.Size.y) {
+						var candidate = grid[x2, y2];
+						if (candidate) {
+							tags.Add (candidate.tag);
+							if (candidate.tag == checking.tag && !matched.Contains(candidate)) {
+								// it's a new match! Check for more matches adjacent to this match.
+								matchChecks.Push(candidate);
+							}
+						}
+					}
+				}
+			}
+		}
+		return matched;
+	}
+
 	// here is the function we call from Spawnscript	
 	// scan the array created by the above events
 	// return a match number
-	
-	public int DetectMatches(GameObject other) { 
-		int matches = 0;	
-		if (!other) {
-			Debug.Log("missing gameobject (other)");
-			return 0;
-		}
-		foreach (GameObject collided in CollidingWith) { 
-			if (!collided) {
-				Debug.Log("missing gameobject (collided)");
-				continue;
-			}
-			if (other.GetInstanceID() == collided.GetInstanceID()) {
-				Debug.Log("Avoid nasty hard loop");
-				continue;
-			}
-			if (other.tag == collided.tag) { 
-				matches++;
-				CurrentMatches.Add(collided);
-				//CellScript cScript = collided.GetComponent<CellScript>();
-				//matches += cScript.DetectMatches(collided);
-				//Debug.Log("Matched: " + matches);
-			}
-		}
-		return matches;
+	public int DetectMatches() {
+		return FindMatches().Count;
 	}
-	public void DestroyMatches(GameObject other) { 
-		foreach (GameObject death in CurrentMatches) { 
+	public void DestroyMatches() { 
+		foreach (Transform death in FindMatches()) { 
 			if (CollectParticlesPrefab) {
 				Instantiate(CollectParticlesPrefab, death.transform.position, Quaternion.identity);
 			}
-			CollidingWith.Remove(death);
-			DestroyObject(death);
+			DestroyObject(death.gameObject);
 		}
-		if (CollectParticlesPrefab) {	
-			Instantiate(CollectParticlesPrefab, other.transform.position, Quaternion.identity);
-		}
-		CollidingWith.Remove(other);
-		DestroyObject(other);
 	}
 }
