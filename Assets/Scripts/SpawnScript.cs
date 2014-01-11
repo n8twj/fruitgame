@@ -67,10 +67,10 @@ public class SpawnScript : MonoBehaviour {
 	public delegate void MatchHandler(int removed);
 
 	public int FindFruitColumn(float x) {
-		return Mathf.RoundToInt((x - transform.position.x) / sizeX);
+		return Mathf.RoundToInt((x - transform.position.x - spawnOffsetX) / sizeX);
 	}
 	private float RoundFruitColumn(float x) {
-		return FindFruitColumn(x) * sizeX + transform.position.x;
+		return FindFruitColumn(x) * sizeX + transform.position.x + spawnOffsetX;
 	}
 	public int FindFruitRow(float y) {
 		return Mathf.RoundToInt((y - Floor.position.y - sizeY/2) / sizeY);
@@ -78,14 +78,12 @@ public class SpawnScript : MonoBehaviour {
 
 	public Transform[,] BuildMatcherGrid() {
 		Transform[,] ret = new Transform[(int)Size.x, (int)Size.y];
-		var gridded = 0;
 		foreach (Transform fruit in transform) {
 			var x = FindFruitColumn(fruit.position.x);
 			var y = FindFruitRow(fruit.position.y);
 			// This may be false for non-fruit, say, the floor
 			if (0 <= x && x < Size.x && 0 <= y && y < Size.y) {
 				ret[x, y] = fruit;
-				gridded++;
 			}
 		}
 		return ret;
@@ -116,6 +114,10 @@ public class SpawnScript : MonoBehaviour {
 					Debug.Log("Hit the floor");
 					return;	
 				}
+
+				var x = FindFruitColumn(hit.transform.position.x);
+				var y = FindFruitRow(hit.transform.position.y);
+				Debug.Log (string.Format ("grid: {0},{1} tag: {2}", x, y, hit.transform.tag));
 
 				// Grab the attached component
 				// hit is the actual gameobject that was clicked in gameplay
