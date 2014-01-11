@@ -52,6 +52,11 @@ public class SpawnScript : MonoBehaviour {
 		}	
 	}
 
+	// Publish an event when blocks are matched.
+	// http://www.codeproject.com/Articles/11541/The-Simplest-C-Events-Example-Imaginable
+	public event MatchHandler Match;
+	public delegate void MatchHandler(int removed);
+
 	void FixedUpdate() {
 		if (Input.GetMouseButtonDown(0)) {
 			Debug.Log("Mouse Button Down");
@@ -75,6 +80,9 @@ public class SpawnScript : MonoBehaviour {
 				if (matched >= 1) {
 					audio.PlayOneShot(match);
 					cScript.DestroyMatches(hit.transform.gameObject);
+					// Publish an event when blocks are matched.
+					// Count is the clicked piece (1) + count of all matched pieces
+					Match(1 + matched);
 				} 
 				else {
 					audio.PlayOneShot(noMatch);
